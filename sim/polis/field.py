@@ -23,6 +23,13 @@ class Constitution:
     grow_prob: float = 0.05     # Art. 4: a firing node may link to a co-firing node
     budget: float = 2.5         # Art. 5: total outgoing influence is capped
     max_out: int = 24           # Art. 5: and so is the number of links
+    homeostasis: bool = False   # Art. 6 (experimental, off by default): each node steers its own threshold
+    target_rate: float = 0.02   # Art. 6: ...toward this firing rate
+    homeo_eta: float = 0.05     # Art. 6: adaptation speed
+    rate_tau: float = 100.0     # Art. 6: memory of own activity (ticks)
+    thr_range: tuple = (0.15, 3.0)
+    inhib_frac: float = 0.0     # Art. 7: share of nodes whose signals inhibit
+    inhib_gain: float = 1.0     # Art. 7: strength of inhibitory signals
 
 
 class Field:
@@ -39,6 +46,12 @@ class Field:
         self.v = np.zeros(n)
         self.refr = np.zeros(n, dtype=int)
         self.fired = np.zeros(n, dtype=bool)
+        self.thr = np.full(n, self.c.threshold)
+        # Art. 7: some citizens speak against — their spikes lower potential
+        self.sign = np.ones(n)
+        if self.c.inhib_frac > 0:
+            self.sign[self.rng.random(n) < self.c.inhib_frac] = -self.c.inhib_gain
+        self.rate = np.full(n, self.c.target_rate)
 
     def step(self, ext):
         """Advance one tick. Returns the packets sent: (src, dst) arrays."""
@@ -47,15 +60,16 @@ class Field:
         srcs, dsts = [], []
         pre = np.flatnonzero(self.fired)
         for s in pre:
+            sg = self.sign[s]
             for d, w in self.out[s].items():
-                I[d] += w
+                I[d] += sg * w
                 srcs.append(s)
                 dsts.append(d)
 
         self.v = self.v * c.leak + I
         self.v[self.refr > 0] = 0.0
         self.refr = np.maximum(self.refr - 1, 0)
-        new = self.v >= c.threshold
+        new = self.v >= self.thr
         self.v[new] = 0.0
         self.refr[new] = c.refractory
 
@@ -80,6 +94,13 @@ class Field:
                 k = c.budget / tot
                 for d in links:
                     links[d] *= k
+
+        # Art. 6: homeostasis — quiet nodes grow sensitive, loud ones dull
+        if c.homeostasis:
+            a = 1.0 / c.rate_tau
+            self.rate = self.rate * (1 - a) + a * new
+            self.thr = np.clip(self.thr + c.homeo_eta * (self.rate - c.target_rate),
+                               *c.thr_range)
 
         self.fired = new
         return np.array(srcs, dtype=int), np.array(dsts, dtype=int)

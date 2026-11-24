@@ -16,7 +16,7 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "sim"))
-from polis import Field, Substrate  # noqa: E402
+from polis import Constitution, Field, Substrate  # noqa: E402
 
 N, N_PAT, PER_PAT = 1024, 4, 32
 
@@ -31,20 +31,43 @@ def purity(sub, pref, active):
     return float(np.mean(vals))
 
 
+def make_const(a):
+    c = Constitution(homeostasis=a.homeo)
+    if a.target_rate is not None:
+        c.target_rate = a.target_rate
+    if a.thr_min is not None:
+        c.thr_range = (a.thr_min, c.thr_range[1])
+    if a.eta is not None:
+        c.homeo_eta = a.eta
+    if a.inhib is not None:
+        c.inhib_frac = a.inhib
+    if a.inhib_gain is not None:
+        c.inhib_gain = a.inhib_gain
+    return c
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ticks", type=int, default=3000)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--every", type=int, default=25)
+    ap.add_argument("--homeo", action="store_true", help="enable Art. 6 (homeostasis)")
+    ap.add_argument("--target-rate", type=float, default=None)
+    ap.add_argument("--thr-min", type=float, default=None)
+    ap.add_argument("--eta", type=float, default=None)
+    ap.add_argument("--inhib", type=float, default=None, help="Art. 7 fraction")
+    ap.add_argument("--inhib-gain", type=float, default=None)
     a = ap.parse_args()
 
     rng = np.random.default_rng(a.seed)
-    field = Field(N, init_degree=8, rng=rng, w_init=(0.2, 0.5))
+    field = Field(N, init_degree=8, rng=rng, w_init=(0.2, 0.5),
+                  const=make_const(a))
     static = Substrate(N, rng=np.random.default_rng(a.seed + 1))
     federal = copy.deepcopy(static)
     subs = {"static": static, "federal": federal}
 
     fire_by_pat = np.zeros((N, N_PAT))
+    on_ticks = np.zeros(N_PAT)
     window = {k: [] for k in subs}
     rows = []
     pat = 0
@@ -56,7 +79,9 @@ def main():
         if phase < 20:
             ext[pat * PER_PAT:(pat + 1) * PER_PAT] = 1.2
         src, dst = field.step(ext)
-        fire_by_pat[field.fired, pat] += 1
+        if phase < 20:
+            fire_by_pat[field.fired, pat] += 1
+            on_ticks[pat] += 1
         for k, s in subs.items():
             if len(src):
                 window[k].append(s.route(src, dst))
@@ -77,10 +102,16 @@ def main():
               f"{r['static'][1]*100:>5.1f}% | {r['federal'][0]:>12.2f} "
               f"{r['federal'][1]*100:>5.1f}%")
 
-    active = fire_by_pat.sum(1) > 0
-    pref = fire_by_pat.argmax(1)
-    chance = np.bincount(pref[active], minlength=N_PAT).max() / active.sum()
-    print(f"\nactive nodes: {active.sum()}/{N}")
+    rate = fire_by_pat / np.maximum(on_ticks, 1)          # firing rate per pattern
+    active = rate.sum(1) > 0
+    sel = np.zeros(N)
+    sel[active] = rate[active].max(1) / rate[active].sum(1)  # 0.25 = no preference
+    selective = active & (sel > 0.5)
+    pref = rate.argmax(1)
+    print(f"\nactive nodes: {active.sum()}/{N}   selective (>50% one pattern): {selective.sum()}"
+          f"   mean selectivity: {sel[active].mean():.2f}")
+    active = selective
+    chance = np.bincount(pref[active], minlength=N_PAT).max() / max(active.sum(), 1)
     print(f"deme purity  static: {purity(static, pref, active):.2f}  "
           f"federal: {purity(federal, pref, active):.2f}  (chance ~{chance:.2f})")
     print(f"migrations   intra: {federal.stats['intra']}  "

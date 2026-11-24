@@ -41,7 +41,9 @@ Regions start specializing in one input pattern without anyone
 assigning them — the first sign of emergent functional areas.
 
 Known limit: only ~17% of nodes become active; most of the interior
-stays silent. Next steps are in [docs/architecture.md](docs/architecture.md#next).
+stays silent. Homeostasis and inhibition (experiment e02) wake the
+interior but one pattern then wins everywhere — see
+[docs/architecture.md](docs/architecture.md#e02-조용한-내부-깨우기-항상성-억제).
 
 ## Docs
 
