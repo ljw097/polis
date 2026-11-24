@@ -55,6 +55,15 @@ gates, a half adder and a 1-bit latch from a few nodes, so Polis is a
 general-purpose machine, not only a learning accelerator.
 See [docs/programming-model.md](docs/programming-model.md).
 
+## Migration without errors (e04)
+
+Nodes keep moving while a compiled 8-bit adder runs. With the Polis
+protocol (home directory + address caches + forwarding pointers + tick
+barrier) all 200 additions stay correct even at 5 moves per tick, at
+0.5–3 control messages per 100 packets at realistic rates. Without cache
+correction and forwarding, almost every addition is wrong even when
+migration is rare. See [docs/migration-protocol.md](docs/migration-protocol.md).
+
 ## Learning experiment (e03)
 
 Taught only by a broadcast +1/−1 reward (no backprop), a 512-node field
@@ -69,6 +78,7 @@ reward is too coarse to train hidden computation. Details in
 - [Architecture](docs/architecture.md)
 - [Constitution (local rules)](docs/constitution.md)
 - [Programming model](docs/programming-model.md)
+- [Migration protocol](docs/migration-protocol.md)
 
 ## License
 

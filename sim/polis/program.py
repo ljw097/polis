@@ -16,7 +16,7 @@ import numpy as np
 from .field import Constitution, Field
 
 COMPILED = Constitution(
-    threshold=1.0, leak=0.7, refractory=0,
+    threshold=1.0, leak=0.0, refractory=0,
     lr=0.0, decay=0.0, prune_below=0.0, grow_prob=0.0,
     budget=1e9, max_out=10**6, homeostasis=False,
 )
@@ -56,8 +56,10 @@ class Machine:
     def __init__(self, field, inputs, outputs):
         self.f, self.inputs, self.outputs = field, inputs, outputs
 
-    def run(self, events, ticks):
-        """events: {input name: [ticks it fires]}. Returns {output: [ticks fired]}."""
+    def run(self, events, ticks, deliver=None, on_tick=None):
+        """events: {input name: [ticks it fires]}. Returns {output: [ticks fired]}.
+        `deliver` routes packets through a network model; `on_tick(t)` runs
+        between ticks (the only moment migration is allowed)."""
         f = self.f
         f.reset_state()
         out = {k: [] for k in self.outputs}
@@ -66,7 +68,9 @@ class Machine:
             for name, when in events.items():
                 if t in when:
                     ext[self.inputs[name]] = f.thr[self.inputs[name]]
-            f.step(ext)
+            f.step(ext, deliver)
+            if on_tick:
+                on_tick(t)
             for k, node in self.outputs.items():
                 if f.fired[node]:
                     out[k].append(t)
@@ -108,3 +112,22 @@ def latch(p, set_, reset):
     p.link(reset, r, 1.0)
     p.link(r, m, 5.0)
     return m
+
+
+def full_adder(p, a, b, cin):
+    s1 = gate_xor(p, a, b)
+    s = gate_xor(p, s1, cin)
+    cout = gate_or(p, gate_and(p, a, b), gate_and(p, s1, cin))
+    return s, cout
+
+
+def ripple_adder(p, bits):
+    """bits-bit adder. Inputs a0.., b0..; outputs s0..s{bits}.
+    Uses level signalling: hold the inputs on, read the outputs once settled."""
+    a = [p.input(f"a{i}") for i in range(bits)]
+    b = [p.input(f"b{i}") for i in range(bits)]
+    c = p.node(thr=1e9)                     # constant 0 carry-in
+    for i in range(bits):
+        s, c = full_adder(p, a[i], b[i], c)
+        p.output(f"s{i}", s)
+    p.output(f"s{bits}", c)

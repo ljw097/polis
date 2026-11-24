@@ -59,8 +59,10 @@ class Field:
         self.elig = [dict() for _ in range(n)]
         self.r_avg = {}
 
-    def step(self, ext):
-        """Advance one tick. Returns the packets sent: (src, dst) arrays."""
+    def step(self, ext, deliver=None):
+        """Advance one tick. Returns the packets sent: (src, dst) arrays.
+        `deliver(src, dst) -> bool` lets a network model decide whether each
+        packet actually reached its node; undelivered packets are lost."""
         c = self.c
         I = ext.astype(float).copy()
         srcs, dsts = [], []
@@ -68,7 +70,8 @@ class Field:
         for s in pre:
             sg = self.sign[s]
             for d, w in self.out[s].items():
-                I[d] += sg * w
+                if deliver is None or deliver(s, d):
+                    I[d] += sg * w
                 srcs.append(s)
                 dsts.append(d)
 
