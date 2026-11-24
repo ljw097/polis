@@ -94,6 +94,7 @@ reward is too coarse to train hidden computation. Details in
 - [Programming model](docs/programming-model.md)
 - [Migration protocol](docs/migration-protocol.md)
 - [Network and compatibility](docs/network.md)
+- [On-chip packets and routing](docs/packets.md)
 
 ## License
 
