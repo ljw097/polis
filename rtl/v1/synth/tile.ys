@@ -1,0 +1,8 @@
+read_verilog -DSYNTHESIS ../polis_tile1.v
+hierarchy -top polis_tile1 -chparam LOGN 8 -chparam LOGNB 12 -chparam LOGS 12 -chparam LOGF 12 -chparam LOGV 13
+proc; flatten; opt; memory -nomap; opt
+techmap; opt
+abc -g cmos2
+opt_clean
+stat -tech cmos
+ltp -noff

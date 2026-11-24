@@ -55,7 +55,20 @@ gates, a half adder and a 1-bit latch from a few nodes, so Polis is a
 general-purpose machine, not only a learning accelerator.
 See [docs/programming-model.md](docs/programming-model.md).
 
-## RTL (verified)
+## RTL v1: everything in (verified)
+
+`rtl/v1/` adds leak, refractory, homeostasis, the learning unit (Art. 2,
+3, 7b + credit), reward sweeps (Art. 8), synchronous SRAMs, a config
+read/write port for the management-core firmware (migration, new links,
+incoming budget) and a NEP gateway bridge. Co-simulation against
+`sim/polis/hw1.py`: 17,632 spikes and every word of every table identical
+across 6 runs with migration, growth, budget sweeps and rewards; migration
+is transparent (same spikes as without it). NEP request bytes from a
+socket client run on the RTL SoC and come back as correct sums.
+Critical path: 181 gate levels in node update (router: 33) — needs
+pipelining. See [docs/rtl-v1.md](docs/rtl-v1.md).
+
+## RTL v0 (verified)
 
 Synthesizable Verilog for the tile, router and mesh (compiled mode) in
 `rtl/`. Co-simulated against the Python hardware model with Verilator:
@@ -125,7 +138,8 @@ reward is too coarse to train hidden computation. Details in
 - [On-chip packets and routing](docs/packets.md)
 - [Tile microarchitecture](docs/tile.md)
 - [Evaluation at scale](docs/scale.md)
-- [RTL and verification](docs/rtl.md)
+- [RTL v0 and verification](docs/rtl.md)
+- [RTL v1: full feature set](docs/rtl-v1.md)
 
 ## License
 

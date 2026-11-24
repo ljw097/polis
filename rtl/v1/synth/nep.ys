@@ -1,0 +1,8 @@
+read_verilog -DSYNTHESIS ../polis_nep.v
+hierarchy -top polis_nep -chparam TB 10 -chparam LOGN 8 -chparam NIN 64 -chparam NOUT 64
+proc; flatten; opt; memory -nomap; opt
+techmap; opt
+abc -g cmos2
+opt_clean
+stat -tech cmos
+ltp -noff
