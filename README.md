@@ -45,6 +45,14 @@ stays silent. Homeostasis and inhibition (experiment e02) wake the
 interior but one pattern then wins everywhere — see
 [docs/architecture.md](docs/architecture.md#e02-조용한-내부-깨우기-항상성-억제).
 
+## Can it compute? (e03)
+
+Taught only by a broadcast +1/−1 reward (no backprop), a 512-node field
+learns a simple mapping (answer = a): 65–78% vs 31% for the untaught
+control. It does **not** yet learn XOR (42–53%, control 42%): one global
+reward is too coarse to train hidden computation. Details in
+[docs/architecture.md](docs/architecture.md#e03-계산할-수-있나-교육).
+
 ## Docs
 
 - [Glossary: CS ↔ Polis](docs/glossary.md)

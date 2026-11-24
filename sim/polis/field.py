@@ -30,6 +30,10 @@ class Constitution:
     thr_range: tuple = (0.15, 3.0)
     inhib_frac: float = 0.0     # Art. 7: share of nodes whose signals inhibit
     inhib_gain: float = 1.0     # Art. 7: strength of inhibitory signals
+    inhib_lr: float = 0.0       # Art. 7b: inhibition learns its targets: links onto
+                                #   nodes busier than target grow, onto quiet ones fade
+    lr_reward: float = 0.0      # Art. 8: education — a broadcast reward scales each
+                                #   link's recent contribution (eligibility)
 
 
 class Field:
@@ -52,6 +56,8 @@ class Field:
         if self.c.inhib_frac > 0:
             self.sign[self.rng.random(n) < self.c.inhib_frac] = -self.c.inhib_gain
         self.rate = np.full(n, self.c.target_rate)
+        self.elig = [dict() for _ in range(n)]
+        self.r_avg = {}
 
     def step(self, ext):
         """Advance one tick. Returns the packets sent: (src, dst) arrays."""
@@ -74,15 +80,25 @@ class Field:
         self.refr[new] = c.refractory
 
         post = np.flatnonzero(new)
+        a = 1.0 / c.rate_tau
+        self.rate = self.rate * (1 - a) + a * new
         for s in pre:
             links = self.out[s]
+            inhib = self.sign[s] < 0
+            el = self.elig[s]
             for d in list(links):
-                if new[d]:  # Art. 2
-                    links[d] += c.lr * (1.0 - links[d])
-                else:       # Art. 3
-                    links[d] -= c.decay
-                    if links[d] < c.prune_below:
-                        del links[d]
+                if inhib and c.inhib_lr:  # Art. 7b
+                    links[d] = min(1.0, links[d] + c.inhib_lr *
+                                   (self.rate[d] - c.target_rate) / c.target_rate)
+                else:
+                    if c.lr_reward:  # Art. 8 credit: did I push d above its usual rate?
+                        el[d] = el.get(d, 0.0) + (float(new[d]) - self.rate[d])
+                    if new[d]:    # Art. 2
+                        links[d] += c.lr * (1.0 - links[d])
+                    else:         # Art. 3
+                        links[d] -= c.decay
+                if links[d] < c.prune_below:
+                    del links[d]
             # Art. 4: free connection — anyone may link to anyone who co-fired
             if len(post) and len(links) < c.max_out and self.rng.random() < c.grow_prob:
                 d = int(self.rng.choice(post))
@@ -97,13 +113,40 @@ class Field:
 
         # Art. 6: homeostasis — quiet nodes grow sensitive, loud ones dull
         if c.homeostasis:
-            a = 1.0 / c.rate_tau
-            self.rate = self.rate * (1 - a) + a * new
             self.thr = np.clip(self.thr + c.homeo_eta * (self.rate - c.target_rate),
                                *c.thr_range)
 
         self.fired = new
         return np.array(srcs, dtype=int), np.array(dsts, dtype=int)
+
+    def reward(self, r, key=None):
+        """Art. 8: broadcast a reward. Every link is nudged by
+        (reward - expected reward) x its recent credit, then credit is cleared.
+        `key` lets the teacher keep a separate expectation per question;
+        a single shared expectation gets stuck when the field is always wrong."""
+        c = self.c
+        if not isinstance(self.r_avg, dict):
+            self.r_avg = {}
+        exp = self.r_avg.get(key, 0.0)
+        delta = r - exp
+        self.r_avg[key] = exp + 0.05 * delta
+        for s in range(self.n):
+            el = self.elig[s]
+            if not el:
+                continue
+            links = self.out[s]
+            for d, e in el.items():
+                if d in links:
+                    links[d] = float(np.clip(links[d] + c.lr_reward * delta * e, 0.0, 1.0))
+                    if links[d] < c.prune_below:
+                        del links[d]
+            el.clear()
+        return delta
+
+    def reset_state(self):
+        self.v[:] = 0.0
+        self.fired[:] = False
+        self.refr[:] = 0
 
     def n_links(self):
         return sum(len(o) for o in self.out)
