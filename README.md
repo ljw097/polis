@@ -55,6 +55,15 @@ gates, a half adder and a 1-bit latch from a few nodes, so Polis is a
 general-purpose machine, not only a learning accelerator.
 See [docs/programming-model.md](docs/programming-model.md).
 
+## RTL (verified)
+
+Synthesizable Verilog for the tile, router and mesh (compiled mode) in
+`rtl/`. Co-simulated against the Python hardware model with Verilator:
+an 8-bit adder and random programs on 4x4 and 8x8 meshes — 88,474
+spikes, every tick identical. Yosys: ~97.5K transistors per tile +
+router, about 1/10 of the tile's SRAM area, so the chip is memory-bound.
+See [docs/rtl.md](docs/rtl.md).
+
 ## At scale (e08)
 
 Vectorised model up to 262K nodes / 16.8M synapses on a synthetic,
@@ -116,6 +125,7 @@ reward is too coarse to train hidden computation. Details in
 - [On-chip packets and routing](docs/packets.md)
 - [Tile microarchitecture](docs/tile.md)
 - [Evaluation at scale](docs/scale.md)
+- [RTL and verification](docs/rtl.md)
 
 ## License
 
