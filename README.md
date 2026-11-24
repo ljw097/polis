@@ -55,6 +55,20 @@ gates, a half adder and a 1-bit latch from a few nodes, so Polis is a
 general-purpose machine, not only a learning accelerator.
 See [docs/programming-model.md](docs/programming-model.md).
 
+## Talks TCP/UDP (e05)
+
+Inside the chip, packets are tiny custom spikes; at the edge, gateway
+tiles run a standard TCP/IP stack. Any ordinary program can call Polis
+with plain sockets using the small NEP v1 message format:
+
+```
+$ python experiments/e05_network.py 17 25
+UDP: 17 + 25 = 42
+TCP: 17 + 25 = 42
+```
+
+See [docs/network.md](docs/network.md).
+
 ## Migration without errors (e04)
 
 Nodes keep moving while a compiled 8-bit adder runs. With the Polis
@@ -79,6 +93,7 @@ reward is too coarse to train hidden computation. Details in
 - [Constitution (local rules)](docs/constitution.md)
 - [Programming model](docs/programming-model.md)
 - [Migration protocol](docs/migration-protocol.md)
+- [Network and compatibility](docs/network.md)
 
 ## License
 
