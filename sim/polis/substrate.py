@@ -19,7 +19,7 @@ import numpy as np
 
 class Substrate:
     def __init__(self, n, grid=8, capacity=16, region_tiles=4, rng=None,
-                 treaty_budget=8, traffic_halflife=4):
+                 treaty_budget=8, traffic_halflife=4, balance=0.0):
         assert n <= grid * grid * capacity
         self.n, self.grid, self.cap = n, grid, capacity
         self.rng = rng or np.random.default_rng(0)
@@ -36,6 +36,11 @@ class Substrate:
         self.treaty_budget = treaty_budget
         self.traffic_decay = 0.5 ** (1 / traffic_halflife)
         self.reps = np.zeros(self.n_regions, dtype=int)
+        # work balance: a node's work = packets it receives; tile load = sum.
+        # Swaps pay balance * change in sum of squared tile loads.
+        self.balance = balance
+        self.work = np.zeros(n)
+        self.tile_load = np.zeros(self.n_tiles)
         self.stats = defaultdict(int)
 
     # ---- routing -------------------------------------------------------
@@ -47,6 +52,7 @@ class Substrate:
             self.traffic[s][d] += 1
             self.traffic[d][s] += 1
         np.add.at(self.load, ts, 1)
+        np.add.at(self.work, dst, 1)
         return hops
 
     def region(self, node):
@@ -82,13 +88,18 @@ class Substrate:
             return None
         cu = self._cost(u, a) - self._cost(u, b)
         best, gain = None, 0.0
+        La, Lb = self.tile_load[a], self.tile_load[b]
         for x in np.flatnonzero(self.tile == b):
             g = cu + self._cost(x, b) - self._cost(x, a)
+            if self.balance:
+                d = self.work[u] - self.work[x]
+                g -= self.balance * (2 * d * (Lb - La) + 2 * d * d)
             if g > gain:
                 best, gain = int(x), g
         return (gain, u, best, a, b) if best is not None else None
 
     def migrate(self, sample=256):
+        self.tile_load = np.bincount(self.tile, weights=self.work, minlength=self.n_tiles)
         # elections: least-loaded tile in each region becomes representative
         for r in range(self.n_regions):
             tiles = np.flatnonzero(self.region_of_tile == r)
@@ -128,6 +139,11 @@ class Substrate:
                     nt[k] = v
             self.traffic[i] = nt
         self.load *= self.traffic_decay
+        self.work *= self.traffic_decay
 
     def _swap(self, u, x):
-        self.tile[u], self.tile[x] = self.tile[x], self.tile[u]
+        a, b = self.tile[u], self.tile[x]
+        d = self.work[u] - self.work[x]
+        self.tile_load[a] -= d
+        self.tile_load[b] += d
+        self.tile[u], self.tile[x] = b, a

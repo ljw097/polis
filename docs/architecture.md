@@ -115,7 +115,7 @@ OS가 실제 배치를 관리하듯, 사용자와 학습 규칙은 **가상 필�
 - [x] 이주 프로토콜 → [migration-protocol.md](migration-protocol.md)
 - [x] 외부 네트워크 호환 (TCP/UDP, 관문 타일) → [network.md](network.md)
 - [x] 칩 내부 패킷과 라우팅 → [packets.md](packets.md)
-- [ ] 타일 마이크로아키텍처: 메모리, 연산기, 타일당 노드 수
+- [x] 타일 마이크로아키텍처 (v0) → [tile.md](tile.md)
 - [ ] 평가 기준: GPU, 뉴로모픽 칩과의 비교 지표
 
 보류된 연구 항목:

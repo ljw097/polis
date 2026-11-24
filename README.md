@@ -55,6 +55,15 @@ gates, a half adder and a 1-bit latch from a few nodes, so Polis is a
 general-purpose machine, not only a learning accelerator.
 See [docs/programming-model.md](docs/programming-model.md).
 
+## Hardware model (e07)
+
+`sim/polis/hw.py` models the tile design with int8 weights, int16
+potentials, fixed-size SRAM tables and a per-tick cycle count. It matches
+the float simulator bit for bit on compiled programs and spike for spike
+on a learned field. Open issues: free connectivity costs ~48 bits per
+synapse, and at small scale migration shifts the bottleneck from network
+to compute. See [docs/tile.md](docs/tile.md).
+
 ## Talks TCP/UDP (e05)
 
 Inside the chip, packets are tiny custom spikes; at the edge, gateway
@@ -95,6 +104,7 @@ reward is too coarse to train hidden computation. Details in
 - [Migration protocol](docs/migration-protocol.md)
 - [Network and compatibility](docs/network.md)
 - [On-chip packets and routing](docs/packets.md)
+- [Tile microarchitecture](docs/tile.md)
 
 ## License
 
