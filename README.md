@@ -45,7 +45,17 @@ stays silent. Homeostasis and inhibition (experiment e02) wake the
 interior but one pattern then wins everywhere — see
 [docs/architecture.md](docs/architecture.md#e02-조용한-내부-깨우기-항상성-억제).
 
-## Can it compute? (e03)
+## Programming model
+
+A program is a connection graph, made in one of three ways on the same
+hardware: **compile** (write the links directly — deterministic),
+**learn** (links grow from reward), or **mixed** (a compiled skeleton
+with some links left open to learning). In compiled mode a field builds
+gates, a half adder and a 1-bit latch from a few nodes, so Polis is a
+general-purpose machine, not only a learning accelerator.
+See [docs/programming-model.md](docs/programming-model.md).
+
+## Learning experiment (e03)
 
 Taught only by a broadcast +1/−1 reward (no backprop), a 512-node field
 learns a simple mapping (answer = a): 65–78% vs 31% for the untaught
@@ -58,6 +68,7 @@ reward is too coarse to train hidden computation. Details in
 - [Glossary: CS ↔ Polis](docs/glossary.md)
 - [Architecture](docs/architecture.md)
 - [Constitution (local rules)](docs/constitution.md)
+- [Programming model](docs/programming-model.md)
 
 ## License
 
