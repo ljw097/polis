@@ -116,7 +116,8 @@ OS가 실제 배치를 관리하듯, 사용자와 학습 규칙은 **가상 필�
 - [x] 외부 네트워크 호환 (TCP/UDP, 관문 타일) → [network.md](network.md)
 - [x] 칩 내부 패킷과 라우팅 → [packets.md](packets.md)
 - [x] 타일 마이크로아키텍처 (v0) → [tile.md](tile.md)
-- [ ] 평가 기준: GPU, 뉴로모픽 칩과의 비교 지표
+- [x] 큰 규모 평가, 메모리 형식, 면적·에너지 추정 → [scale.md](scale.md)
+- [ ] RTL 작성과 합성 (로직 면적 확정)
 
 보류된 연구 항목:
 

@@ -55,6 +55,16 @@ gates, a half adder and a 1-bit latch from a few nodes, so Polis is a
 general-purpose machine, not only a learning accelerator.
 See [docs/programming-model.md](docs/programming-model.md).
 
+## At scale (e08)
+
+Vectorised model up to 262K nodes / 16.8M synapses on a synthetic,
+brain-like modular graph. Migration that balances traffic *and* work
+gives 2.2x shorter ticks and 3x less energy than random placement;
+optimising traffic alone creates compute hotspots. Memory is the weak
+spot: 29–38 bits per synapse at best, ~10–20x fewer synapses per mm²
+than Loihi 2 — the price of free, migrating, per-synapse-plastic
+connections. See [docs/scale.md](docs/scale.md).
+
 ## Hardware model (e07)
 
 `sim/polis/hw.py` models the tile design with int8 weights, int16
@@ -105,6 +115,7 @@ reward is too coarse to train hidden computation. Details in
 - [Network and compatibility](docs/network.md)
 - [On-chip packets and routing](docs/packets.md)
 - [Tile microarchitecture](docs/tile.md)
+- [Evaluation at scale](docs/scale.md)
 
 ## License
 
