@@ -1,0 +1,7 @@
+read_verilog -DSYNTHESIS ../polis_router.v
+hierarchy -top polis_router -chparam GRIDB 5 -chparam MX 7 -chparam MY 9
+proc; flatten; opt; memory -nomap; opt
+techmap; opt
+abc -g cmos2
+opt_clean
+stat -tech cmos
